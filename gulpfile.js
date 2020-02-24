@@ -48,6 +48,8 @@ const htmlBuildDir = `${htmlDir}build/`;
 
 const spriteDir = `${assetsDir}sprites/`;
 
+const svgDir = `${assetsDir}images/svg/`
+
 gulp.task('build-css', function() {
     let dirs = [
         `${destBuildDir}/**/*.css`
@@ -94,7 +96,8 @@ gulp.task('default', function () {
             });
         }),
         combineJs(),
-        combineHtml()
+        combineHtml(),
+        cleanSvg()
     ]).then(() => {
         log('build complete');
 
@@ -138,6 +141,8 @@ gulp.task('default', function () {
                     if (SERVER) server.notify.apply(server, [file]);
                 });
             });
+
+
         }
     });
 
@@ -226,6 +231,36 @@ function combineJs(changedFile = null) {
         });
     })).then(() => {
         log(colors.green('js combined'));
+    });
+}
+
+function cleanSvg() {
+    return new Promise((resolve) => {
+        
+        Promise.all([
+            new Promise((resolveInner) => {
+                // create css
+                        // create stylus
+                gulp.src(`${svgDir}/*.svg`)
+                    .pipe(svgmin({
+                        plugins: [
+                            {removeHiddenElems: true},
+                            {removeAttrs: {
+                                attrs: 'fill|stroke'
+                            }},
+                            {removeStyleElement: true}
+                        ],
+                        js2svg: {
+                            pretty: true
+                        }
+                    }))
+                    .pipe(gulp.dest(`${svgDir}`))
+                    .on('end', resolveInner);
+            })
+        ]).then(() => {
+            log(colors.green(`svg cleaned`));
+            resolve();
+        });
     });
 }
 
